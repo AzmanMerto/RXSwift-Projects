@@ -31,7 +31,8 @@ class ViewController: UIViewController, UIScrollViewDelegate {
     }
     
     @objc func onTapAdd() {
-        
+        let user = User(userID: 48954, id: 4534, title: "NomoteteS", body: "Lets Learn RXSwift")
+        self.viewModel.addUser(user: user)
     }
     
     func bindTableView() {
@@ -42,7 +43,18 @@ class ViewController: UIViewController, UIScrollViewDelegate {
             
         }.disposed(by: bag)
         tableView.rx.itemSelected.subscribe(onNext: { indexPath in
-
+            let alert = UIAlertController(title: "Note", message: "Edit Note", preferredStyle: .alert)
+            alert.addTextField { texfield in
+                
+            }
+            alert.addAction(UIAlertAction(title: "Edit", style: .default, handler: { action in
+                let textField = alert.textFields![0] as UITextField
+                self.viewModel.editUser(title: textField.text ?? "", index: indexPath.row)
+            }))
+            DispatchQueue.main.async {
+                self.present(alert, animated: true, completion: nil)
+                
+            }
         }).disposed(by: bag)
         
         tableView.rx.itemDeleted.subscribe(onNext: { [weak self]IndexPath in
@@ -74,7 +86,9 @@ class ViewModel{
     }
     
     func addUser(user: User) {
-        
+        guard var users = try? users.value() else { return }
+        users.insert(user, at: 0)
+        self.users.on(.next(users))
     }
     
     func deleteUser(index: Int) {
@@ -84,13 +98,15 @@ class ViewModel{
     }
     
     func editUser(title: String,index: Int) {
-        
+        guard var users = try? users.value() else { return }
+        users[index].title = title
+        self.users.on(.next(users))
     }
 }
 
 struct User: Codable {
     let userID, id: Int?
-    let title, body: String?
+    var title, body: String?
 
     enum CodingKeys: String, CodingKey {
         case userID = "userId"
