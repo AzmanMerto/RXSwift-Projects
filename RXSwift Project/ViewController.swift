@@ -22,9 +22,16 @@ class ViewController: UIViewController, UIScrollViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.title = "Users"
+        let add = UIBarButtonItem(title: "Add", style: .done, target: self, action: #selector(onTapAdd))
+        self.navigationItem.rightBarButtonItem = add
         self.view.addSubview(tableView)
         viewModel.fetchUsers()
         bindTableView()
+    }
+    
+    @objc func onTapAdd() {
+        
     }
     
     func bindTableView() {
@@ -34,6 +41,14 @@ class ViewController: UIViewController, UIScrollViewDelegate {
             cell.detailTextLabel?.text = "\(item.id)"
             
         }.disposed(by: bag)
+        tableView.rx.itemSelected.subscribe(onNext: { indexPath in
+
+        }).disposed(by: bag)
+        
+        tableView.rx.itemDeleted.subscribe(onNext: { [weak self]IndexPath in
+            guard let self = self else {return}
+            self.viewModel.deleteUser(index: IndexPath.row)
+        }).disposed(by: bag)
     }
 }
 
@@ -56,6 +71,20 @@ class ViewModel{
             }
         }
         task.resume()
+    }
+    
+    func addUser(user: User) {
+        
+    }
+    
+    func deleteUser(index: Int) {
+        guard var users = try? users.value() else { return }
+        users.remove(at: index)
+        self.users.on(.next(users))
+    }
+    
+    func editUser(title: String,index: Int) {
+        
     }
 }
 
