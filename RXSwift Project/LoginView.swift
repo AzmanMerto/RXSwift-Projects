@@ -13,7 +13,7 @@ import UIKit
 class LoginViewController : UIViewController {
     
     // textfield
-    lazy var textFiledEmail: UITextField = {
+    lazy var textFieldEmail: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Enter Email"
         textField.borderStyle = .roundedRect
@@ -43,21 +43,66 @@ class LoginViewController : UIViewController {
         return btn
     }()
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        setupUI()
+        createObservables()
+    }
+    
+    
     @objc func onTapBtnLogin() {
         
     }
     
     private func setupUI() {
         self.view.backgroundColor = .white
+        self.view.addSubview(textFieldEmail)
+        self.view.addSubview(textFieldPassword)
+        self.view.addSubview(btnLogin)
+    
+        NSLayoutConstraint.activate([
+            textFieldEmail.leadingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.leadingAnchor,constant: 20),
+            textFieldEmail.trailingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.trailingAnchor,constant: -20),
+            textFieldEmail.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            textFieldPassword.leadingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.leadingAnchor,constant: 20),
+            textFieldPassword.trailingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.trailingAnchor,constant: -20),
+            textFieldPassword.topAnchor.constraint(equalTo: textFieldEmail.bottomAnchor,constant: 20),
+            btnLogin.topAnchor.constraint(equalTo: textFieldPassword.bottomAnchor,constant: 20),
+            btnLogin.widthAnchor.constraint(equalTo: textFieldEmail.widthAnchor),
+            btnLogin.centerXAnchor.constraint(equalTo: self.view.centerXAnchor)
+        ])
+
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    private func createObservables() {
         
-        setupUI()
+    }
+    
+}
+
+class LoginViewModel {
+    var email: BehaviorSubject<String>  = BehaviorSubject(value: "")
+    var password: BehaviorSubject<String>  = BehaviorSubject(value: "")
+
+    var isValidEmail:Observable<Bool> {
+        email.map{$0.isValidEmail()}
+    }
+    
+    var isValidPassword:Observable<Bool> {
+        password.map{ $0.count < 6}
+    }
+    
+    var isValidInput:Observable<Bool> {
+        return Observable.combineLatest(isValidEmail,isValidPassword).map({ $0 && $1 })
     }
     
     
-    
-    
+}
+
+extension String {
+    func isValidEmail() -> Bool {
+        let regex = try! NSRegularExpression(pattern: "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", options: .caseInsensitive)
+        return regex.firstMatch(in: self, options: [], range: NSRange(location: 0, length: count)) != nil
+    }
 }
