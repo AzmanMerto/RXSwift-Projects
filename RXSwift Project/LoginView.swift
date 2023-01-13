@@ -43,6 +43,9 @@ class LoginViewController : UIViewController {
         return btn
     }()
     
+    var bag = DisposeBag()
+    private let viewModel = LoginViewModel()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -51,9 +54,7 @@ class LoginViewController : UIViewController {
     }
     
     
-    @objc func onTapBtnLogin() {
-        
-    }
+   
     
     private func setupUI() {
         self.view.backgroundColor = .white
@@ -76,9 +77,19 @@ class LoginViewController : UIViewController {
     }
     
     private func createObservables() {
+        textFieldEmail.rx.text.map({$0 ?? ""}).bind(to: viewModel.email).disposed(by: bag)
+        textFieldPassword.rx.text.map({$0 ?? ""}).bind(to: viewModel.password).disposed(by: bag)
         
+        viewModel.isValidInput.bind(to: btnLogin.rx.isEnabled).disposed(by: bag)
+        viewModel.isValidInput.subscribe(onNext: { [weak self] isValid in
+         
+            self?.btnLogin.backgroundColor = isValid ? .systemRed : .red
+        }).disposed(by: bag)
     }
     
+    @objc func onTapBtnLogin() {
+        
+    }
 }
 
 class LoginViewModel {
@@ -90,7 +101,9 @@ class LoginViewModel {
     }
     
     var isValidPassword:Observable<Bool> {
-        password.map{ $0.count < 6}
+        password.map { password in
+            return password.count < 6 ? false : true
+        }
     }
     
     var isValidInput:Observable<Bool> {
